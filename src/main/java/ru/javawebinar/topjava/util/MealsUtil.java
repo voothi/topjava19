@@ -43,9 +43,6 @@ public class MealsUtil {
             }
         }
 
-        System.out.println("1 tableOfCaloriesPerDay " + tableOfCaloriesPerDay);
-        System.out.println("2 tableOfMealByInterval " + tableOfMealByInterval);
-
         return makeTableOfMealTo(tableOfMealByInterval, tableOfCaloriesPerDay, caloriesPerDay);
     }
 
@@ -60,12 +57,12 @@ public class MealsUtil {
             Map<LocalDate, Integer> tableOfCaloriesPerDay,
             Integer caloriesPerDay) {
         final ArrayList<MealTo> tableOfMealTo = new ArrayList<>();
+
         for (Meal meal : tableOfMealByInterval) {
             tableOfMealTo.add(new MealTo(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
                     tableOfCaloriesPerDay.get(meal.getDate()) > caloriesPerDay));
-
-            System.out.println("2 tableOfCaloriesPerDay.get " + tableOfCaloriesPerDay.get(meal.getDate()));
         }
+
         return tableOfMealTo;
     }
 
