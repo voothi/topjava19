@@ -32,38 +32,33 @@ public class MealsUtil {
     public static final List<MealTo>
     filteredByCycles(List<Meal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
 
-        final Map<LocalDate, Integer> tableOfCaloriesPerDay = new LinkedHashMap<>();
-        final List<Meal> tableOfMealByInterval = new ArrayList<>();
+        final Map<LocalDate, Integer> mapOfCaloriesSumPerDay = new HashMap<>();
+        final List<Meal> listOfMealByInterval = new ArrayList<>();
 
         for (Meal meal : meals) {
-                addMeal(tableOfCaloriesPerDay, meal.getDate(), meal.getCalories());
+            mapOfCaloriesSumPerDay.merge(meal.getDate(), meal.getCalories(), Integer::sum);
 
             if (isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
-                tableOfMealByInterval.add(meal);
+                listOfMealByInterval.add(meal);
             }
         }
 
-        return makeTableOfMealTo(tableOfMealByInterval, tableOfCaloriesPerDay, caloriesPerDay);
-    }
-
-    private static final void
-    addMeal(Map<LocalDate, Integer> tableOfCaloriesPerDay, LocalDate date, Integer calories) {
-        tableOfCaloriesPerDay.merge(date, calories, Integer::sum);
+        return makeListOfMealTo(listOfMealByInterval, mapOfCaloriesSumPerDay, caloriesPerDay);
     }
 
     private static final List<MealTo>
-    makeTableOfMealTo(
-            List<Meal> tableOfMealByInterval,
-            Map<LocalDate, Integer> tableOfCaloriesPerDay,
+    makeListOfMealTo(
+            List<Meal> listOfMealByInterval,
+            Map<LocalDate, Integer> mapOfCaloriesSumPerDay,
             Integer caloriesPerDay) {
-        final ArrayList<MealTo> tableOfMealTo = new ArrayList<>();
+        final List<MealTo> listOfMealTo = new ArrayList<>();
 
-        for (Meal meal : tableOfMealByInterval) {
-            tableOfMealTo.add(new MealTo(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
-                    tableOfCaloriesPerDay.get(meal.getDate()) > caloriesPerDay));
+        for (Meal meal : listOfMealByInterval) {
+            listOfMealTo.add(new MealTo(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
+                    mapOfCaloriesSumPerDay.get(meal.getDate()) > caloriesPerDay));
         }
 
-        return tableOfMealTo;
+        return listOfMealTo;
     }
 
 //    public static List<MealTo>
