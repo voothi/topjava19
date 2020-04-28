@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static ru.javawebinar.topjava.util.TimeUtil.isBetweenHalfOpen;
 
@@ -23,46 +24,45 @@ public class MealsUtil {
                 new Meal(LocalDateTime.of(2020, Month.JANUARY, 31, 20, 0), "Ужин", 410)
         );
 
-        List<MealTo> mealsTo = filteredByCycles(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
-        mealsTo.forEach(System.out::println);
+        System.out.println("filteredByCycles: ");
+        List<MealTo> mealsToCycles = filteredByCycles(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
+        mealsToCycles.forEach(System.out::println);
 
-        //        System.out.println(filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000));
+        System.out.println("filteredByStreams: ");
+        List<MealTo> mealsToStreams = filteredByStreams(meals, LocalTime.of(7, 0), LocalTime.of(12, 0), 2000);
+        mealsToStreams.forEach(System.out::println);
     }
 
     public static final List<MealTo>
     filteredByCycles(List<Meal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-
         final Map<LocalDate, Integer> mapOfCaloriesSumPerDay = new HashMap<>();
-        final List<Meal> listOfMealByInterval = new ArrayList<>();
-
         for (Meal meal : meals) {
             mapOfCaloriesSumPerDay.merge(meal.getDate(), meal.getCalories(), Integer::sum);
+        }
 
+        final List<MealTo> listOfMealTo = new ArrayList<>();
+        for (Meal meal : meals) {
             if (isBetweenHalfOpen(meal.getTime(), startTime, endTime)) {
-                listOfMealByInterval.add(meal);
+                listOfMealTo.add(new MealTo(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
+                        mapOfCaloriesSumPerDay.get(meal.getDate()) > caloriesPerDay));
             }
         }
-
-        return makeListOfMealTo(listOfMealByInterval, mapOfCaloriesSumPerDay, caloriesPerDay);
-    }
-
-    private static final List<MealTo>
-    makeListOfMealTo(
-            List<Meal> listOfMealByInterval,
-            Map<LocalDate, Integer> mapOfCaloriesSumPerDay,
-            Integer caloriesPerDay) {
-        final List<MealTo> listOfMealTo = new ArrayList<>();
-
-        for (Meal meal : listOfMealByInterval) {
-            listOfMealTo.add(new MealTo(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
-                    mapOfCaloriesSumPerDay.get(meal.getDate()) > caloriesPerDay));
-        }
-
         return listOfMealTo;
     }
 
-//    public static List<MealTo>
-//    filteredByStreams(List<Meal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-//        return null;
-//    }
+    public static List<MealTo>
+    filteredByStreams(List<Meal> meals, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
+        Map<LocalDate, Integer> mapOfCaloriesSumPerDay =
+                meals.stream()
+                        .collect(Collectors
+                                .toMap(Meal::getDate, Meal::getCalories, Integer::sum));
+
+        return meals.stream()
+                .filter(meal -> isBetweenHalfOpen(meal.getTime(), startTime, endTime))
+                .map(meal -> new MealTo(meal.getDateTime(),
+                        meal.getDescription(),
+                        meal.getCalories(),
+                        mapOfCaloriesSumPerDay.get(meal.getDate()) > caloriesPerDay))
+                .collect(Collectors.toList());
+    }
 }
